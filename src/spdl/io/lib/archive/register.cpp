@@ -11,6 +11,7 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
+#include "tar_impl.h"
 #include "zip_impl.h"
 
 namespace nb = nanobind;
@@ -21,6 +22,14 @@ namespace {
 
 NB_MODULE(_archive, m) {
   m.def("parse_zip", [](const nb::bytes& bytes) {
+    auto* data = bytes.c_str();
+    auto size = bytes.size();
+
+    nb::gil_scoped_release __g;
+    return zip::parse_zip(data, size);
+  });
+
+  m.def("parse_zip", [](const nb::bytearray& bytes) {
     auto* data = bytes.c_str();
     auto size = bytes.size();
 
@@ -45,6 +54,52 @@ NB_MODULE(_archive, m) {
         }
         return ret;
       });
+
+  m.def(
+      "inflate",
+      [](const nb::bytearray& bytes,
+         uint64_t offset,
+         uint32_t compressed_size,
+         uint32_t uncompressed_size) {
+        auto* data = bytes.c_str();
+        nb::bytearray ret{};
+        ret.resize(uncompressed_size);
+
+        {
+          nb::gil_scoped_release __g;
+          zip::inflate(
+              data + offset, compressed_size, ret.data(), uncompressed_size);
+        }
+        return ret;
+      });
+
+  m.def("parse_tar_bytes", [](const nb::bytes& bytes) {
+    auto* data = bytes.c_str();
+    auto size = bytes.size();
+
+    nb::gil_scoped_release __g;
+    return tar::parse_tar_bytes(data, size);
+  });
+
+  m.def(
+      "parse_tar_file",
+      &tar::parse_tar_file,
+      nb::call_guard<nb::gil_scoped_release>());
+
+  m.def(
+      "load_bytes",
+      [](const std::string& path, uint64_t offset, uint64_t size) {
+        nb::bytearray ret{};
+        ret.resize(size);
+        auto* dst = ret.data();
+
+        {
+          nb::gil_scoped_release __g;
+          tar::load_bytes(path, offset, size, (char*)dst);
+        }
+        return ret;
+      });
+  m.def("load_text", tar::load_text, nb::call_guard<nb::gil_scoped_release>());
 }
 
 } // namespace
