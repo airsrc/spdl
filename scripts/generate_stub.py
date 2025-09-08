@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from nanobind.stubgen import StubGen
-from spdl.io.lib import _import_libspdl, _import_libspdl_cuda, _archive
+from spdl.io.lib import _archive, _import_libspdl, _import_libspdl_cuda
 
 
 def _parse_args():
