@@ -8,7 +8,7 @@
 
 """Generate interface files for extension modules."""
 
-import logging
+import re
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -22,20 +22,27 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _generate(mod, output):
+def _generate(mod):
     sg = StubGen(mod)
     sg.put(mod)
-    with open(output, "w") as f:
-        f.write(sg.get())
+    return sg.get()
 
 
 def _main():
     args = _parse_args()
-    logging.basicConfig(level=logging.DEBUG)
     args.output_dir.mkdir(exist_ok=True, parents=True)
-    _generate(_archive, args.output_dir / "_archive.pyi")
-    _generate(_import_libspdl(), args.output_dir / "_libspdl.pyi")
-    _generate(_import_libspdl_cuda(), args.output_dir / "_libspdl_cuda.pyi")
+
+    with open(args.output_dir / "_archive.pyi", "w") as f:
+        stub = _generate(_archive)
+        f.write(stub)
+
+    with open(args.output_dir / "_libspdl.pyi", "w") as f:
+        stub = _generate(_import_libspdl())
+        f.write(stub)
+
+    with open(args.output_dir / "_libspdl_cuda.pyi", "w") as f:
+        stub = _generate(_import_libspdl_cuda())
+        
 
 
 if __name__ == "__main__":
