@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from nanobind.stubgen import StubGen
-from spdl.io.lib import _import_libspdl, _import_libspdl_cuda
+from spdl.io.lib import _import_libspdl, _import_libspdl_cuda, _archive
 
 
 def _parse_args():
@@ -33,6 +33,7 @@ def _main():
     args = _parse_args()
     logging.basicConfig(level=logging.DEBUG)
     args.output_dir.mkdir(exist_ok=True, parents=True)
+    _generate(_archive, args.output_dir / "_archive.pyi")
     _generate(_import_libspdl(), args.output_dir / "_libspdl.pyi")
     _generate(_import_libspdl_cuda(), args.output_dir / "_libspdl_cuda.pyi")
 
